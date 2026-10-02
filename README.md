@@ -1,5 +1,10 @@
 # Log Analysis Dashboard
 
+> **⬇️ [Download the Windows installer (v1.0.0)](https://github.com/prachityagi2222/log-analysis-dashboard/releases/latest)**  
+> Just download the `.exe`, run it, and launch from the Start Menu. No Python, Rust, or setup required.
+
+> ⚠️ Windows SmartScreen may warn because the installer is unsigned. Click **"More info" → "Run anyway"** to proceed.
+
 > **Local-First, AI-Powered Log Investigation Dashboard**  
 > Turn raw server logs into plain-English security reports in seconds — 100% on your machine without cloud exposure or API keys.
 
