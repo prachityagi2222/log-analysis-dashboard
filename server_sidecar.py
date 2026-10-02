@@ -7,11 +7,24 @@ from app.main import app
 
 
 def find_available_port(start_port=8080, max_attempts=50):
+    """Return the first port the server can actually bind.
+
+    Probing with ``connect_ex`` is unreliable on Windows: a port that nothing
+    is listening on, but which sits in a reserved/excluded range or is blocked
+    by a lingering socket, still fails the connect and therefore looks "free",
+    yet binding it later fails. Binding is what the server ultimately does, so
+    we replicate that here instead.
+    """
     for port in range(start_port, start_port + max_attempts):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(("127.0.0.1", port)) != 0:
-                return port
-    return start_port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            try:
+                probe.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            return port
+    raise RuntimeError(
+        f"No free port available in range {start_port}-{start_port + max_attempts - 1}."
+    )
 
 
 def main():

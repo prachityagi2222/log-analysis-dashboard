@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Base capability for the Log Analysis Dashboard window.",
+  "permissions": [
+    "core:default"
+  ]
+}

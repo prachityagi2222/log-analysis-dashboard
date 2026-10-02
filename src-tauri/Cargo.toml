@@ -1,0 +1,23 @@
+[package]
+name = "log-analysis-dashboard"
+version = "1.0.0"
+description = "Local-First AI-Powered Log Investigation Dashboard"
+authors = ["Prachi Tyagi"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[[bin]]
+name = "log-analysis-dashboard"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
