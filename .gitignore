@@ -1,0 +1,60 @@
+# ============ Python ============
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ============ Data & Databases ============
+# User-uploaded logs and parsed files (privacy-sensitive!)
+data/raw/
+data/parsed/
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# ============ PyInstaller ============
+build/
+dist/
+*.spec
+# Except any custom spec you might have written intentionally
+!server_sidecar.spec
+
+# ============ Tauri / Node ============
+node_modules/
+src-tauri/target/
+src-tauri/binaries/*.exe
+src-tauri/binaries/*.exe.*
+src-tauri/gen/
+package-lock.json
+yarn.lock
+
+# ============ IDE / Editors ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============ OS ============
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============ Secrets / Env ============
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ============ Logs ============
+*.log
+!sample_logs/*.log

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Analysis Dashboard — Local Security Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-group" onclick="showScreen('screen-upload')">
+      <div class="logo-icon">L</div>
+      <div class="logo-text">
+        <h1>Log Analysis Dashboard</h1>
+        <span>Local-First AI Security Analyst</span>
+      </div>
+    </div>
+    <div class="header-nav">
+      <span class="badge-tag pulse" id="engine-status">Local Engine Active</span>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-upload')">+ Upload Log</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+
+    <!-- SCREEN 1: UPLOAD -->
+    <div id="screen-upload" class="screen-container active">
+      <div class="upload-hero">
+        <h2>Investigate Server Logs Instantly</h2>
+        <p>Turn raw SSH, Web, and Firewall logs into plain-English security reports with automated rule & machine-learning detection — 100% on your machine.</p>
+      </div>
+
+      <div class="card">
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" style="display: none;" accept=".log,.txt">
+          <span class="drop-icon">🛡️</span>
+          <h3>Drop your log file here</h3>
+          <p>or click to browse from your device (.log or .txt)</p>
+          <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Select Log File</button>
+          
+          <div class="sample-buttons">
+            <span style="font-size: 0.8rem; color: var(--text-dim); align-self: center;">Try sample:</span>
+            <button class="sample-btn" onclick="uploadSample('ssh_brute_force.log')">SSH Brute Force</button>
+            <button class="sample-btn" onclick="uploadSample('web_attacks.log')">Web Attacks (SQLi/LFI)</button>
+            <button class="sample-btn" onclick="uploadSample('firewall_port_scan.log')">Firewall Port Scan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Uploads Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Recent Investigations</h3>
+          <button class="btn btn-secondary btn-sm" onclick="loadRecentLogs()">Refresh</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Type</th>
+                <th>Uploaded</th>
+                <th>Overall Severity</th>
+                <th>Findings</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recent-logs-tbody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-dim);">Loading recent uploads...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: RESULTS -->
+    <div id="screen-results" class="screen-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-upload')">← Upload Another</button>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" onclick="showScreen('screen-report')">View Full Report →</button>
+        </div>
+      </div>
+
+      <!-- Results Header Card -->
+      <div class="card">
+        <div class="card-header" style="border: none; padding-bottom: 0;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <h2 id="res-filename" style="font-size: 1.5rem; font-weight: 700;">server.log</h2>
+              <span id="res-severity-badge" class="severity-badge sev-critical">CRITICAL</span>
+            </div>
+            <p id="res-meta-line" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              Type: SSH | Uploaded: Just now | Total Events: 0
+            </p>
+          </div>
+        </div>
+
+        <!-- Summary Paragraph Box -->
+        <div class="summary-box" style="margin-top: 1.25rem;">
+          <div class="summary-meta">
+            <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              AI Incident Summary
+            </span>
+            <span id="res-llm-mode" class="badge-tag">Mock Mode</span>
+          </div>
+          <p id="res-summary-text" class="summary-text">
+            Analyzing events...
+          </p>
+          <div id="res-tactics-container" class="tactic-pills"></div>
+        </div>
+      </div>
+
+      <!-- Findings / Detections Table -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Security Findings & Detections</h3>
+            <p style="color: var(--text-dim); font-size: 0.82rem;">Click any row to inspect triggered raw log lines and event details.</p>
+          </div>
+          <span id="res-detection-count" class="badge-tag" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4);">
+            0 Findings
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Detection</th>
+                <th>Method</th>
+                <th>Severity</th>
+                <th>MITRE ATT&CK Tactic</th>
+                <th>Summary</th>
+                <th>Lines</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="detections-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: DETECTION DETAIL -->
+    <div id="screen-detail" class="screen-container">
+      <div style="margin-bottom: 1.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-results')">← Back to Results</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <h2 id="det-title" style="font-size: 1.35rem; font-weight: 700;">Detection Details</h2>
+              <span id="det-severity-badge" class="severity-badge sev-high">HIGH</span>
+              <span id="det-method-badge" class="method-badge method-rule">RULE</span>
+            </div>
+            <p id="det-tactic" style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.4rem;">
+              MITRE ATT&CK Tactic: Credential Access
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem;">Description</h4>
+          <p id="det-description" style="font-size: 1rem; color: #f1f5f9; background: var(--bg-primary); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            Loading description...
+          </p>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h4 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-dim);">Triggered Raw Log Lines</h4>
+            <span id="det-lines-count" style="font-size: 0.8rem; color: var(--accent-cyan);">0 lines matched</span>
+          </div>
+          <div id="det-raw-lines" class="code-viewer">
+            <!-- Rendered code lines -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: FULL REPORT -->
+    <div id="screen-report" class="screen-container">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-results')">← Back to Results</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 style="font-size: 1.5rem; font-weight: 800;">Full Security Incident Report</h2>
+            <p id="rep-header-meta" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+              Generated: Just now
+            </p>
+          </div>
+          <span id="rep-severity-badge" class="severity-badge sev-critical">CRITICAL</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim);">Target Log</div>
+            <div id="rep-filename" style="font-weight: 700; font-size: 1.05rem; word-break: break-all;">-</div>
+          </div>
+          <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim);">Log Format</div>
+            <div id="rep-logtype" style="font-weight: 700; font-size: 1.05rem; text-transform: uppercase;">-</div>
+          </div>
+          <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim);">Generation Mode</div>
+            <div id="rep-mode" style="font-weight: 700; font-size: 1.05rem;">-</div>
+          </div>
+          <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim);">Total Detections</div>
+            <div id="rep-total-findings" style="font-weight: 700; font-size: 1.05rem;">0</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.75rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent-cyan);">Executive Narrative</h3>
+          <div class="summary-box" style="margin-bottom: 0;">
+            <p id="rep-summary-text" class="summary-text">-</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.75rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem;">MITRE ATT&CK Tactics Identified</h3>
+          <div id="rep-tactics-list" class="tactic-pills"></div>
+        </div>
+
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem;">Analysis Engine Audit Trail</h3>
+          <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+            <div>✓ Log structure parsed and timestamp normalized</div>
+            <div>✓ Deterministic rule engine executed against protocol attack catalog</div>
+            <div>✓ Scikit-learn Isolation Forest unsupervised anomaly model evaluated</div>
+            <div>✓ Natural language report synthesized locally without external cloud telemetry</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-weight: 700; font-size: 1.1rem;" id="loading-text">Analyzing Log File...</div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);">Running Rules, Isolation Forest ML & AI synthesis</div>
+  </div>
+
+  <footer>
+    Log Analysis Dashboard • Local-First Security Intelligence • All data remains on-premises
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
