@@ -58,3 +58,5 @@ desktop.ini
 # ============ Logs ============
 *.log
 !sample_logs/*.log
+
+.kilo

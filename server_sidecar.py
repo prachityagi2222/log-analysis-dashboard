@@ -2,6 +2,8 @@ import os
 import sys
 import socket
 import argparse
+import asyncio
+import traceback
 import uvicorn
 from app.main import app
 
@@ -34,17 +36,42 @@ def main():
 
     port = args.port or int(os.environ.get("PORT", 0)) or find_available_port(8080)
 
-    # Print exact handshake token for Tauri sidecar reader
-    print(f"SERVER_READY:http://127.0.0.1:{port}", flush=True)
-
-    # Run Uvicorn directly
-    uvicorn.run(
+    config = uvicorn.Config(
         app,
         host="127.0.0.1",
         port=port,
         log_level="info",
-        access_log=False
+        access_log=False,
     )
+    server = uvicorn.Server(config)
+
+    async def run():
+        # Start uvicorn in the background, then wait until it has actually
+        # bound the socket and completed startup before announcing readiness.
+        # This closes the race where Tauri navigated to the port before the
+        # server was listening.
+        serve_task = asyncio.create_task(server.serve())
+        while not server.started:
+            if serve_task.done():
+                # The server exited before becoming ready (e.g. bind error,
+                # import failure). Re-raise so the top-level handler prints
+                # the real cause to stderr.
+                serve_task.result()
+                raise RuntimeError(
+                    "Backend server exited before it was ready "
+                    "(no SERVER_READY emitted)."
+                )
+            await asyncio.sleep(0.05)
+        print(f"SERVER_READY:http://127.0.0.1:{port}", flush=True)
+        await serve_task
+
+    try:
+        asyncio.run(run())
+    except Exception:
+        # Surface the real failure (missing DLL, import error, bind error, ...)
+        # on stderr so the Tauri parent captures it in its startup log file.
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
